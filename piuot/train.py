@@ -28,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run the generic PIUOT trajectory model with YAML-driven dataset selection.",
     )
-    parser.add_argument("--yaml-config", type=Path, default=DEFAULT_CONFIG_PATH)
+    parser.add_argument("--config", "--yaml-config", dest="config_path", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--run-name", default=None)
     parser.add_argument("--data-path", type=Path, default=None)
     parser.add_argument("--embedding-key", default=None)
@@ -44,17 +44,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args, extra = build_parser().parse_known_args()
-    yaml_cfg = load_yaml_config(args.yaml_config)
+    yaml_cfg = load_yaml_config(args.config_path)
 
     run_name = args.run_name or str(yaml_cfg["experiment"].get("run_name", "piuot_run"))
     data_path = Path(args.data_path or yaml_cfg["data"]["path"])
     embedding_key = args.embedding_key or embedding_key_from_config(yaml_cfg)
     time_key = args.time_key or str(yaml_cfg["data"].get("time_key", "time_bin"))
     raw_time_key = args.raw_time_key or str(yaml_cfg["data"].get("raw_time_key", "t"))
-    device_type = args.device_type or device_from_config(yaml_cfg, "train", "cpu")
+    device_type = args.device_type or device_from_config(yaml_cfg, "cpu")
     seed = int(args.seed if args.seed is not None else yaml_cfg.get("seed", 0))
 
-    src_pkg = importlib.import_module("src_mps_druot_ablation_suite")
+    src_pkg = importlib.import_module("core")
     sys.modules["src"] = src_pkg
 
     from src.config_model import config, init_config
@@ -145,7 +145,7 @@ def main() -> None:
         _run(
             [
                 python_bin,
-                str(METHOD_ROOT / "plot_trajectory.py"),
+                str(METHOD_ROOT / "plot.py"),
                 "--run_name",
                 run_name,
                 "--seed",
@@ -159,7 +159,7 @@ def main() -> None:
         _run(
             [
                 python_bin,
-                str(METHOD_ROOT / "diagnose_mass.py"),
+                str(METHOD_ROOT / "diagnose.py"),
                 "--run_name",
                 run_name,
                 "--seed",

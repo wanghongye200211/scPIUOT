@@ -3,14 +3,12 @@ experiment:
   run_name: piuot_run
 
 device:
-  train: mps
-  analysis: cpu
-  perturbation: mps
+  type: mps
 
 seed: 0
 
 data:
-  path: piuot/data/input/input.h5ad
+  path: piuot/input/input.h5ad
   embedding_key: null
   time_key: time_bin
   raw_time_key: t
@@ -47,24 +45,3 @@ training:
   detach_ot_weights: true
   evaluate_n: 4000
   ns: 2000
-
-criticality:
-  n_timepoints: 201
-  max_cells: 64
-
-downstream:
-  critical_indicator: product
-  critical_window_start: null
-  critical_window_end: null
-  anchor_min_time: null
-  normalize_start_time: null
-  top_terminal_fates: 5
-
-perturbation:
-  start_time: null
-  end_time: null
-  target_label: null
-  n_timepoints: 25
-  n_repeats: 4
-  max_start_cells: 96
-  scale: 2.0

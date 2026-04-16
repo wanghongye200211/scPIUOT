@@ -2,28 +2,23 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from project_paths import DEFAULT_CONFIG_PATH, DOWNSTREAM_OUTPUT_ROOT
-from yaml_config import load_yaml_config
+DOWNSTREAM_OUTPUT_ROOT = PROJECT_ROOT / "downstream" / "output"
+MANUAL_OUTPUT_LABEL = "dataset"
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Build a generic perturbation manifest from summary JSON.")
-    parser.add_argument("--yaml-config", type=Path, default=DEFAULT_CONFIG_PATH)
+    parser = argparse.ArgumentParser(description="Build a perturbation manifest from an existing summary JSON.")
+    parser.add_argument("--output-label", default=MANUAL_OUTPUT_LABEL)
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    cfg = load_yaml_config(args.yaml_config)
-    label = str(cfg["data"].get("label") or cfg["experiment"].get("name", "dataset"))
+    label = str(args.output_label)
     pert_root = DOWNSTREAM_OUTPUT_ROOT / f"{label}_perturbation_dynamic_fraction"
     summary_json = pert_root / "perturbation_dynamic_fraction_summary.json"
     summary = json.loads(summary_json.read_text(encoding="utf-8"))

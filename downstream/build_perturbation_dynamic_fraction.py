@@ -23,16 +23,32 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from project_paths import DEFAULT_CONFIG_PATH, DOWNSTREAM_OUTPUT_ROOT, PIUOT_OUTPUT_ROOT, PIUOT_ROOT
-from yaml_config import checkpoint_epoch_from_config, device_from_config, embedding_key_from_config, load_yaml_config
+from project_paths import DOWNSTREAM_OUTPUT_ROOT, PIUOT_OUTPUT_ROOT, PIUOT_ROOT
 
 
 EPS = 1e-8
 SCREEN_SEED = 42
+MANUAL_RUN_NAME = "piuot_run"
+MANUAL_SEED = 0
+MANUAL_CHECKPOINT = "auto"
+MANUAL_DEVICE = "cpu"
+MANUAL_DATA_PATH = str(PIUOT_ROOT / "input" / "input.h5ad")
+MANUAL_EMBEDDING_KEY = "X_gae15"
+MANUAL_RAW_TIME_KEY = "t"
+MANUAL_FATE_KEY = "phenotype_facs"
+MANUAL_OUTPUT_LABEL = "dataset"
+MANUAL_START_TIME = None
+MANUAL_END_TIME = None
+MANUAL_TARGET_LABEL = None
+MANUAL_N_TIMEPOINTS = 25
+MANUAL_N_REPEATS = 4
+MANUAL_MAX_START_CELLS = 96
+MANUAL_SCALE = 2.0
+MANUAL_TOP_TERMINAL_FATES = 5
 
 
 def _resolve_src_package(run_name: str) -> str:
-    return "src_mps_druot_ablation_suite"
+    return "core"
 
 
 def _load_runtime_modules(run_name: str):
@@ -176,27 +192,40 @@ def _rollout_condition(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build generic perturbation dynamic-fraction plots.")
-    parser.add_argument("--yaml-config", type=Path, default=DEFAULT_CONFIG_PATH)
+    parser.add_argument("--run-name", default=MANUAL_RUN_NAME)
+    parser.add_argument("--seed", type=int, default=MANUAL_SEED)
+    parser.add_argument("--checkpoint", default=MANUAL_CHECKPOINT)
+    parser.add_argument("--device", default=MANUAL_DEVICE)
+    parser.add_argument("--data-path", type=Path, default=Path(MANUAL_DATA_PATH))
+    parser.add_argument("--embedding-key", default=MANUAL_EMBEDDING_KEY)
+    parser.add_argument("--raw-time-key", default=MANUAL_RAW_TIME_KEY)
+    parser.add_argument("--fate-key", default=MANUAL_FATE_KEY)
+    parser.add_argument("--output-label", default=MANUAL_OUTPUT_LABEL)
+    parser.add_argument("--start-time", type=float, default=MANUAL_START_TIME)
+    parser.add_argument("--end-time", type=float, default=MANUAL_END_TIME)
+    parser.add_argument("--target-label", default=MANUAL_TARGET_LABEL)
+    parser.add_argument("--n-timepoints", type=int, default=MANUAL_N_TIMEPOINTS)
+    parser.add_argument("--n-repeats", type=int, default=MANUAL_N_REPEATS)
+    parser.add_argument("--max-start-cells", type=int, default=MANUAL_MAX_START_CELLS)
+    parser.add_argument("--scale", type=float, default=MANUAL_SCALE)
+    parser.add_argument("--top-terminal-fates", type=int, default=MANUAL_TOP_TERMINAL_FATES)
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    cfg = load_yaml_config(args.yaml_config)
-
-    run_name = str(cfg["experiment"].get("run_name", "piuot_run"))
-    label = str(cfg["data"].get("label") or cfg["experiment"].get("name", run_name))
-    seed = int(cfg.get("seed", 0))
-    data_path = Path(cfg["data"]["path"])
-    embedding_key = embedding_key_from_config(cfg)
-    raw_time_key = str(cfg["data"].get("raw_time_key", "t"))
-    fate_key = str(cfg["data"].get("fate_key", "phenotype_facs"))
-    perturb_cfg = cfg["perturbation"]
-    target_label = perturb_cfg.get("target_label")
+    run_name = str(args.run_name)
+    label = str(args.output_label)
+    seed = int(args.seed)
+    data_path = Path(args.data_path)
+    embedding_key = str(args.embedding_key)
+    raw_time_key = str(args.raw_time_key)
+    fate_key = str(args.fate_key)
+    target_label = args.target_label
 
     run_dir = _resolve_run_dir(run_name, seed)
-    checkpoint = _resolve_checkpoint_path(run_dir, checkpoint_epoch_from_config(cfg, fallback="auto"))
-    device = torch.device(device_from_config(cfg, "perturbation", "cpu"))
+    checkpoint = _resolve_checkpoint_path(run_dir, str(args.checkpoint))
+    device = torch.device(str(args.device))
 
     config_mod, model_mod, train_mod = _load_runtime_modules(run_name)
     cfg_dict = torch.load(run_dir / "config.pt", map_location="cpu", weights_only=False)
@@ -214,17 +243,17 @@ def main() -> None:
     observed_times = np.sort(np.unique(time_values))
 
     start_time = _nearest_observed_time(
-        observed_times[0] if perturb_cfg.get("start_time") is None else float(perturb_cfg["start_time"]),
+        observed_times[0] if args.start_time is None else float(args.start_time),
         observed_times,
     )
     end_time = _nearest_observed_time(
-        observed_times[-1] if perturb_cfg.get("end_time") is None else float(perturb_cfg["end_time"]),
+        observed_times[-1] if args.end_time is None else float(args.end_time),
         observed_times,
     )
-    dense_times = np.linspace(start_time, end_time, int(perturb_cfg.get("n_timepoints", 25)), dtype=np.float64)
-    max_start_cells = int(perturb_cfg.get("max_start_cells", 96))
-    n_repeats = int(perturb_cfg.get("n_repeats", 4))
-    scale = float(perturb_cfg.get("scale", 2.0))
+    dense_times = np.linspace(start_time, end_time, int(args.n_timepoints), dtype=np.float64)
+    max_start_cells = int(args.max_start_cells)
+    n_repeats = int(args.n_repeats)
+    scale = float(args.scale)
 
     start_indices = np.flatnonzero(np.isclose(time_values, start_time))
     rng = np.random.default_rng(SCREEN_SEED)
@@ -307,7 +336,7 @@ def main() -> None:
         .mean(axis=0)
         .sort_values(ascending=False)
     )
-    top_fates = int(cfg["downstream"].get("top_terminal_fates", 5))
+    top_fates = int(args.top_terminal_fates)
     keep_cols = list(terminal_selected.head(top_fates).index)
     other_cols = [col for col in mass_cols if col not in keep_cols]
     if other_cols:

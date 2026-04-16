@@ -14,8 +14,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from project_paths import DEFAULT_CONFIG_PATH, DOWNSTREAM_OUTPUT_ROOT, PIUOT_FIG_ROOT
-from yaml_config import dataset_slug_from_config, load_yaml_config
+from project_paths import DOWNSTREAM_OUTPUT_ROOT, PIUOT_FIG_ROOT
+
+
+MANUAL_RUN_NAME = "piuot_run"
+MANUAL_OUTPUT_LABEL = "dataset"
+MANUAL_OUTPUT_SLUG = "dataset"
+MANUAL_TOP_TERMINAL_FATES = 5
 
 
 def _load_json(path: Path) -> dict:
@@ -33,18 +38,20 @@ def _show_image(ax: plt.Axes, path: Path, title: str) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Build a generic downstream focus bundle.")
-    parser.add_argument("--yaml-config", type=Path, default=DEFAULT_CONFIG_PATH)
+    parser = argparse.ArgumentParser(description="Build a downstream focus bundle from manual paths.")
+    parser.add_argument("--run-name", default=MANUAL_RUN_NAME)
+    parser.add_argument("--output-label", default=MANUAL_OUTPUT_LABEL)
+    parser.add_argument("--output-slug", default=MANUAL_OUTPUT_SLUG)
+    parser.add_argument("--top-terminal-fates", type=int, default=MANUAL_TOP_TERMINAL_FATES)
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    cfg = load_yaml_config(args.yaml_config)
-    run_name = str(cfg["experiment"].get("run_name", "piuot_run"))
-    label = str(cfg["data"].get("label") or cfg["experiment"].get("name", run_name))
-    dataset_slug = dataset_slug_from_config(cfg, fallback="dataset")
-    top_fates = int(cfg["downstream"].get("top_terminal_fates", 5))
+    run_name = str(args.run_name)
+    label = str(args.output_label)
+    dataset_slug = str(args.output_slug)
+    top_fates = int(args.top_terminal_fates)
 
     fig_root = PIUOT_FIG_ROOT / run_name
     traj_root = PIUOT_FIG_ROOT / label

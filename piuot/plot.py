@@ -34,7 +34,7 @@ if str(METHOD_ROOT) not in sys.path:
 
 
 def _resolve_src_package(run_name: str) -> str:
-    return "src_mps_druot_ablation_suite"
+    return "core"
 
 
 def _load_runtime_modules(run_name: str):

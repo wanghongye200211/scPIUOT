@@ -19,15 +19,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from project_paths import DEFAULT_CONFIG_PATH
-from yaml_config import (
-    checkpoint_epoch_from_config,
-    dataset_label_from_config,
-    dataset_slug_from_config,
-    device_from_config,
-    load_yaml_config,
-)
-
 from compute_original_qreshape_mass_indicator import (
     EPS,
     _checkpoint_path,
@@ -39,17 +30,28 @@ from compute_original_qreshape_mass_indicator import (
 )
 
 
+MANUAL_RUN_NAME = "piuot_run"
+MANUAL_SEED = 0
+MANUAL_CHECKPOINT = "auto"
+MANUAL_DEVICE = "cpu"
+MANUAL_OUTPUT_LABEL = "dataset"
+MANUAL_OUTPUT_SLUG = "dataset"
+MANUAL_N_TIMEPOINTS = 201
+MANUAL_MAX_CELLS = 64
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Compare multiple potential-related indicators for a PIUOT/MIOPISDE run."
     )
-    parser.add_argument("--yaml-config", type=Path, default=DEFAULT_CONFIG_PATH)
-    parser.add_argument("--run-name", default=None)
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--checkpoint", default=None)
-    parser.add_argument("--device", default=None)
-    parser.add_argument("--n-timepoints", type=int, default=201)
-    parser.add_argument("--max-cells", type=int, default=64)
+    parser.add_argument("--run-name", default=MANUAL_RUN_NAME)
+    parser.add_argument("--seed", type=int, default=MANUAL_SEED)
+    parser.add_argument("--checkpoint", default=MANUAL_CHECKPOINT)
+    parser.add_argument("--device", default=MANUAL_DEVICE)
+    parser.add_argument("--output-label", default=MANUAL_OUTPUT_LABEL)
+    parser.add_argument("--output-slug", default=MANUAL_OUTPUT_SLUG)
+    parser.add_argument("--n-timepoints", type=int, default=MANUAL_N_TIMEPOINTS)
+    parser.add_argument("--max-cells", type=int, default=MANUAL_MAX_CELLS)
     parser.add_argument("--output-dir", type=Path)
     return parser
 
@@ -71,9 +73,9 @@ def safe_norm(values: np.ndarray) -> np.ndarray:
     return values / max(float(values[0]), EPS)
 
 
-def dataset_meta(config: dict, yaml_cfg: dict, run_name: str) -> tuple[str, str]:
-    label = dataset_label_from_config(yaml_cfg, fallback=run_name)
-    slug = dataset_slug_from_config(yaml_cfg, fallback="dataset")
+def dataset_meta(config: dict, output_label: str, output_slug: str, run_name: str) -> tuple[str, str]:
+    label = str(output_label or run_name).strip() or run_name
+    slug = str(output_slug or "dataset").strip() or "dataset"
     embedding_key = str(config.get("embedding_key", "")).strip()
     display_label = label if not embedding_key or embedding_key == "X" else f"{label} ({embedding_key})"
     clean_slug = re.sub(r"[^0-9A-Za-z._-]+", "_", slug).strip("._") or "dataset"
@@ -82,12 +84,11 @@ def dataset_meta(config: dict, yaml_cfg: dict, run_name: str) -> tuple[str, str]
 
 def main() -> None:
     args = build_parser().parse_args()
-    yaml_cfg = load_yaml_config(args.yaml_config)
-    run_name = args.run_name or str(yaml_cfg["experiment"].get("run_name", "piuot_run"))
-    run_dir = _resolve_run_dir(run_name, args.seed)
+    run_name = str(args.run_name)
+    run_dir = _resolve_run_dir(run_name, int(args.seed))
     checkpoint_path = _checkpoint_path(
         run_dir,
-        args.checkpoint or checkpoint_epoch_from_config(yaml_cfg, fallback="auto"),
+        str(args.checkpoint),
     )
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
@@ -95,12 +96,12 @@ def main() -> None:
     config_mod, model_mod, train_mod = _load_runtime_modules(run_name)
     config = torch.load(run_dir / "config.pt", map_location="cpu")
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
-    dataset_slug, dataset_label = dataset_meta(config, yaml_cfg, run_name)
+    dataset_slug, dataset_label = dataset_meta(config, args.output_label, args.output_slug, run_name)
 
     output_dir = args.output_dir or (run_dir.parent.parent.parent / "figs" / dataset_slug / "potential_indicator_compare")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    device = torch.device(args.device or device_from_config(yaml_cfg, "analysis", "cpu"))
+    device = torch.device(str(args.device))
     x, y, _ = config_mod.load_data(type("Cfg", (), config))
     x = _move_time_series_to_device(x, device)
 

@@ -31,16 +31,13 @@ def load_yaml_config(config_path: str | Path | None = None) -> dict[str, Any]:
     data.setdefault("reduction", {})
     data.setdefault("training", {})
     data.setdefault("selection", {})
-    data.setdefault("criticality", {})
-    data.setdefault("downstream", {})
-    data.setdefault("perturbation", {})
 
     data["data"]["path"] = _resolve_path(data["data"].get("path"))
     return data
 
 
-def device_from_config(config: dict[str, Any], key: str, fallback: str) -> str:
-    value = str(config.get("device", {}).get(key, fallback))
+def device_from_config(config: dict[str, Any], fallback: str) -> str:
+    value = str(config.get("device", {}).get("type", fallback))
     if value not in VALID_DEVICES:
         raise ValueError(f"Unsupported device '{value}'. Choose from {sorted(VALID_DEVICES)}.")
     return value
