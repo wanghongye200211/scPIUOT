@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+piuot/output/
+downstream/output/
+
+piuot/data/**/*.h5ad
+piuot/data/**/*.csv
+piuot/data/**/*.xlsx
