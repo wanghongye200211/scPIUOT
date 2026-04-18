@@ -37,3 +37,18 @@ Criticality and downstream:
   - `python criticality/compute_original_qreshape_mass_indicator.py`
   - `python criticality/compare_potential_related_indicators.py`
   - `python downstream/run_downstream.py`
+
+Suggested figure sequence for GitHub or paper assembly:
+- `Figure 1`: reconstruction trajectory panel
+  - observed cells, predicted cells, and dense rollout trajectories in one consistent view
+- `Figure 2`: potential landscape state map
+  - a selected latent-space `3D` terrain view with an optional state-labeled companion panel
+- `Figure 3`: multi-model comparison
+  - quantitative panels such as `W1`, `W2^2`, `MMD`, plus a shared manifold overlay
+- `Figure 4`: additive criticality
+  - separate `action` and potential-related curves, then combine them in a final criticality view
+
+Practical rule:
+- keep `piuot/` generic and YAML-driven
+- treat `criticality/` and `downstream/` as manual analysis templates that you adapt to your current run
+- use the downstream scripts to rebuild your own figure sequence for your dataset instead of relying on pre-bundled outputs
