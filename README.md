@@ -48,6 +48,12 @@ Suggested figure sequence for GitHub or paper assembly:
 - `Figure 4`: additive criticality
   - separate `action` and potential-related curves, then combine them in a final criticality view
 
+Public figure builders:
+- `Figure 1`: `piuot/plot.py`
+- `Figure 2`: `downstream/build_potential_state_map.py`
+- `Figure 3`: `downstream/build_model_compare_board.py`
+- `Figure 4`: `downstream/build_additive_criticality_board.py`
+
 Practical rule:
 - keep `piuot/` generic and YAML-driven
 - treat `criticality/` and `downstream/` as manual analysis templates that you adapt to your current run

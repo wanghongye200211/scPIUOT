@@ -1,9 +1,11 @@
 anndata
 matplotlib
 numpy
+Pillow
 POT
 pandas
 PyYAML
 scikit-learn
+scipy
 torch
 umap-learn

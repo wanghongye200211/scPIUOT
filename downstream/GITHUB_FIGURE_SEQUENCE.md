@@ -18,7 +18,7 @@ This note records a compact four-figure structure that can be rebuilt from the s
 - Typical use:
   - visualize basin geometry, transition regions, and branch topology
 - Main script path:
-  - downstream-specific builders can be assembled from `downstream/analyze_manifold_physics_fates.py`
+  - `downstream/build_potential_state_map.py`
 
 ### Figure 3. Multi-Model Comparison
 - Goal:
@@ -30,6 +30,8 @@ This note records a compact four-figure structure that can be rebuilt from the s
   - shared manifold overlay
 - Typical use:
   - benchmark figure for GitHub or paper supplements
+- Main script path:
+  - `downstream/build_model_compare_board.py`
 
 ### Figure 4. Additive Criticality
 - Goal:
@@ -42,6 +44,7 @@ This note records a compact four-figure structure that can be rebuilt from the s
 - Main script paths:
   - `criticality/compute_original_qreshape_mass_indicator.py`
   - `criticality/compare_potential_related_indicators.py`
+  - `downstream/build_additive_criticality_board.py`
 
 ## Design Rule
 - Keep the repository code-only.

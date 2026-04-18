@@ -5,6 +5,6 @@ __pycache__/
 piuot/output/
 downstream/output/
 
-piuot/data/**/*.h5ad
-piuot/data/**/*.csv
-piuot/data/**/*.xlsx
+piuot/input/**/*.h5ad
+piuot/input/**/*.csv
+piuot/input/**/*.xlsx

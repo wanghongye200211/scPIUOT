@@ -8,6 +8,9 @@ Files:
 - `build_focus_bundle.py`: compact focus bundle for a selected run
 - `build_perturbation_dynamic_fraction.py`: perturbation-driven dynamic cell-type fractions
 - `build_perturbation_manifest.py`: collect perturbation outputs into a lightweight manifest
+- `build_potential_state_map.py`: build a public Figure 2-style `3D` terrain/state-map panel
+- `build_model_compare_board.py`: build a public Figure 3-style four-panel benchmark board
+- `build_additive_criticality_board.py`: build a public Figure 4-style additive criticality board
 - `GITHUB_FIGURE_SEQUENCE.md`: compact four-figure layout for GitHub or paper assembly
 
 How to use:
